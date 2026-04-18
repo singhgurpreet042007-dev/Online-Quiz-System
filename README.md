@@ -74,10 +74,9 @@ OnlineQuizSystem/
 ## 👨‍💻 Author
 
 **Gurpreet Singh**
-B.Tech CSE Student
+B.Tech Ai&Ds Student
 
 ---
 
 ## ⭐ Support
-
 If you like this project, give it a ⭐ on GitHub!
