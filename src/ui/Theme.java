@@ -1,28 +1,30 @@
 package ui;
 
-import java.awt.Color;
-import java.awt.Font;
+import java.awt.*;
 
 public class Theme {
-    public static final Color BACKGROUND_1 = new Color(5, 10, 22);
-    public static final Color BACKGROUND_2 = new Color(18, 40, 85);
-    public static final Color BACKGROUND_3 = new Color(0, 110, 140);
 
-    public static final Color CARD = new Color(18, 24, 38, 210);
-    public static final Color CARD_BORDER = new Color(255, 255, 255, 35);
+    // Colors
+    public static final Color BG = new Color(18, 18, 32);
+    public static final Color CARD = new Color(28, 28, 50);
 
-    public static final Color ACCENT = new Color(0, 200, 255);
-    public static final Color ACCENT_HOVER = new Color(0, 235, 255);
-    public static final Color SECONDARY = new Color(124, 77, 255);
+    public static final Color ACCENT = new Color(90, 140, 255);
+    public static final Color ACCENT_HOVER = new Color(120, 170, 255);
 
-    public static final Color TEXT = new Color(245, 247, 250);
-    public static final Color MUTED = new Color(180, 190, 205);
-    public static final Color INPUT_BG = new Color(28, 36, 55);
+    public static final Color TEXT = Color.WHITE;
+    public static final Color MUTED = new Color(170, 170, 170);
 
-    public static final Font TITLE_FONT = new Font("SansSerif", Font.BOLD, 34);
-    public static final Font HERO_FONT = new Font("SansSerif", Font.BOLD, 42);
-    public static final Font SUBTITLE_FONT = new Font("SansSerif", Font.PLAIN, 17);
-    public static final Font LABEL_FONT = new Font("SansSerif", Font.PLAIN, 16);
-    public static final Font BUTTON_FONT = new Font("SansSerif", Font.BOLD, 18);
-    public static final Font QUESTION_FONT = new Font("SansSerif", Font.BOLD, 22);
+    public static final Color INPUT_BG = new Color(40, 40, 70);
+    public static final Color CARD_BORDER = new Color(70, 70, 100);
+
+    // Background Gradient
+    public static final Color BACKGROUND_1 = new Color(18, 18, 32);
+    public static final Color BACKGROUND_2 = new Color(40, 40, 70);
+
+    // Fonts
+    public static final Font TITLE_FONT = new Font("Segoe UI", Font.BOLD, 26);
+    public static final Font SUBTITLE_FONT = new Font("Segoe UI", Font.PLAIN, 16);
+    public static final Font LABEL_FONT = new Font("Segoe UI", Font.PLAIN, 14);
+    public static final Font BUTTON_FONT = new Font("Segoe UI", Font.BOLD, 15);
+    public static final Font HERO_FONT = new Font("Segoe UI", Font.BOLD, 36);
 }

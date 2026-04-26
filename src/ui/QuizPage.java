@@ -1,322 +1,207 @@
 package ui;
 
 import dao.QuestionDAO;
-import dao.ResultDAO;
 import model.Question;
 import model.Student;
 
 import javax.swing.*;
-import javax.swing.border.EmptyBorder;
 import java.awt.*;
-import java.util.ArrayList;
 import java.util.List;
 
 public class QuizPage extends JFrame {
 
-    private final Student student;
-    private final List<Question> questions;
-    private final List<String> selectedAnswers = new ArrayList<>();
+    private List<Question> questions;
+    private int index = 0;
+    private int score = 0;
 
-    private int currentIndex = 0;
-    private int timeLeft = 300; // 5 minutes
-    private Timer quizTimer;
+    private Student student;
+    private String category;
 
-    private JLabel studentLabel;
-    private JLabel questionCountLabel;
-    private JLabel timerLabel;
+    private JLabel questionLabel, timerLabel, progressLabel;
+    private JRadioButton optA, optB, optC, optD;
+    private ButtonGroup group;
+    private JButton nextBtn;
     private JProgressBar progressBar;
 
-    private JTextArea questionArea;
+    private Timer timer;
+    private int timeLeft = 15;
 
-    private JRadioButton optionA;
-    private JRadioButton optionB;
-    private JRadioButton optionC;
-    private JRadioButton optionD;
-    private ButtonGroup group;
+    public QuizPage(Student student, String category) {
 
-    private RoundedButton prevButton;
-    private RoundedButton nextButton;
-    private RoundedButton submitButton;
-
-    public QuizPage(Student student) {
         this.student = student;
-        this.questions = new QuestionDAO().getAllQuestions();
+        this.category = category;
 
-        for (int i = 0; i < questions.size(); i++) {
-            selectedAnswers.add("");
-        }
+        QuestionDAO dao = new QuestionDAO();
+        questions = dao.getQuestionsByCategory(category);
 
-        setTitle("Quiz Page");
-        setSize(1180, 720);
+        setTitle("Quiz - " + category);
+        setSize(1000, 650);
         setLocationRelativeTo(null);
-        setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+        setDefaultCloseOperation(EXIT_ON_CLOSE);
 
-        AnimatedBackgroundPanel background = new AnimatedBackgroundPanel();
-        background.setLayout(new GridBagLayout());
+        JPanel main = new JPanel(null);
+        main.setBackground(new Color(18, 18, 32));
 
-        RoundedPanel mainCard = new RoundedPanel();
-        mainCard.setPreferredSize(new Dimension(980, 600));
-        mainCard.setLayout(new BorderLayout());
-        mainCard.setBorder(new EmptyBorder(25, 25, 25, 25));
+        JLabel title = new JLabel(category + " Quiz");
+        title.setFont(new Font("Segoe UI", Font.BOLD, 26));
+        title.setForeground(Color.WHITE);
+        title.setBounds(400, 20, 300, 40);
 
-        JPanel topPanel = buildTopPanel();
-        JPanel centerPanel = buildCenterPanel();
-        JPanel bottomPanel = buildBottomPanel();
+        JPanel card = new JPanel(null);
+        card.setBackground(new Color(28, 28, 50));
+        card.setBounds(120, 90, 750, 420);
+        card.setBorder(BorderFactory.createLineBorder(Color.GRAY));
 
-        mainCard.add(topPanel, BorderLayout.NORTH);
-        mainCard.add(centerPanel, BorderLayout.CENTER);
-        mainCard.add(bottomPanel, BorderLayout.SOUTH);
+        timerLabel = new JLabel("Time: 15");
+        timerLabel.setForeground(Color.RED);
+        timerLabel.setBounds(620, 10, 120, 25);
 
-        background.add(mainCard);
-        add(background);
+        progressLabel = new JLabel();
+        progressLabel.setForeground(Color.WHITE);
+        progressLabel.setBounds(20, 10, 200, 25);
 
-        if (questions.isEmpty()) {
-            JOptionPane.showMessageDialog(this, "No questions found in database.");
-        } else {
-            loadQuestion();
-            startTimer();
-        }
-    }
+        progressBar = new JProgressBar();
+        progressBar.setBounds(20, 40, 700, 8);
 
-    private JPanel buildTopPanel() {
-        JPanel topPanel = new JPanel();
-        topPanel.setOpaque(false);
-        topPanel.setLayout(new BoxLayout(topPanel, BoxLayout.Y_AXIS));
+        questionLabel = new JLabel();
+        questionLabel.setForeground(Color.WHITE);
+        questionLabel.setBounds(20, 60, 700, 60);
 
-        JPanel infoRow = new JPanel(new BorderLayout());
-        infoRow.setOpaque(false);
+        optA = createOption();
+        optB = createOption();
+        optC = createOption();
+        optD = createOption();
 
-        studentLabel = new JLabel("Student: " + student.getName());
-        studentLabel.setForeground(Theme.TEXT);
-        studentLabel.setFont(new Font("SansSerif", Font.BOLD, 18));
-
-        questionCountLabel = new JLabel("Question 1 / " + questions.size(), SwingConstants.CENTER);
-        questionCountLabel.setForeground(Theme.ACCENT_HOVER);
-        questionCountLabel.setFont(new Font("SansSerif", Font.BOLD, 18));
-
-        timerLabel = new JLabel("Time Left: 05:00");
-        timerLabel.setForeground(new Color(255, 210, 120));
-        timerLabel.setFont(new Font("SansSerif", Font.BOLD, 18));
-
-        infoRow.add(studentLabel, BorderLayout.WEST);
-        infoRow.add(questionCountLabel, BorderLayout.CENTER);
-        infoRow.add(timerLabel, BorderLayout.EAST);
-
-        progressBar = new JProgressBar(0, questions.size());
-        progressBar.setValue(1);
-        progressBar.setStringPainted(true);
-        progressBar.setForeground(Theme.ACCENT);
-        progressBar.setBackground(new Color(35, 45, 65));
-        progressBar.setBorder(BorderFactory.createEmptyBorder());
-
-        topPanel.add(infoRow);
-        topPanel.add(Box.createVerticalStrut(15));
-        topPanel.add(progressBar);
-
-        return topPanel;
-    }
-
-    private JPanel buildCenterPanel() {
-        JPanel centerPanel = new JPanel(new BorderLayout(20, 20));
-        centerPanel.setOpaque(false);
-        centerPanel.setBorder(new EmptyBorder(25, 0, 25, 0));
-
-        JPanel questionPanel = new JPanel();
-        questionPanel.setOpaque(false);
-        questionPanel.setLayout(new BorderLayout());
-
-        questionArea = new JTextArea();
-        questionArea.setEditable(false);
-        questionArea.setLineWrap(true);
-        questionArea.setWrapStyleWord(true);
-        questionArea.setFont(new Font("SansSerif", Font.BOLD, 24));
-        questionArea.setForeground(Theme.TEXT);
-        questionArea.setOpaque(false);
-        questionArea.setBorder(new EmptyBorder(10, 10, 10, 10));
-
-        questionPanel.add(questionArea, BorderLayout.CENTER);
-
-        JPanel optionsPanel = new JPanel();
-        optionsPanel.setOpaque(false);
-        optionsPanel.setLayout(new GridLayout(4, 1, 0, 15));
-
-        optionA = createStyledOption();
-        optionB = createStyledOption();
-        optionC = createStyledOption();
-        optionD = createStyledOption();
+        optA.setBounds(40, 140, 650, 40);
+        optB.setBounds(40, 190, 650, 40);
+        optC.setBounds(40, 240, 650, 40);
+        optD.setBounds(40, 290, 650, 40);
 
         group = new ButtonGroup();
-        group.add(optionA);
-        group.add(optionB);
-        group.add(optionC);
-        group.add(optionD);
+        group.add(optA);
+        group.add(optB);
+        group.add(optC);
+        group.add(optD);
 
-        optionsPanel.add(wrapOption(optionA));
-        optionsPanel.add(wrapOption(optionB));
-        optionsPanel.add(wrapOption(optionC));
-        optionsPanel.add(wrapOption(optionD));
+        nextBtn = new JButton("Next");
+        nextBtn.setBounds(300, 350, 150, 40);
+        nextBtn.setBackground(new Color(90, 140, 255));
+        nextBtn.setForeground(Color.WHITE);
+        nextBtn.setFont(new Font("Segoe UI", Font.BOLD, 14));
 
-        centerPanel.add(questionPanel, BorderLayout.NORTH);
-        centerPanel.add(optionsPanel, BorderLayout.CENTER);
+        nextBtn.addActionListener(e -> nextQuestion());
 
-        return centerPanel;
+        card.add(timerLabel);
+        card.add(progressLabel);
+        card.add(progressBar);
+        card.add(questionLabel);
+        card.add(optA);
+        card.add(optB);
+        card.add(optC);
+        card.add(optD);
+        card.add(nextBtn);
+
+        main.add(title);
+        main.add(card);
+
+        add(main);
+
+        loadQuestion();
     }
 
-    private JPanel buildBottomPanel() {
-        JPanel bottomPanel = new JPanel(new BorderLayout());
-        bottomPanel.setOpaque(false);
-
-        JLabel tipLabel = new JLabel("Tip: Select one option and use Next / Previous to navigate.");
-        tipLabel.setForeground(Theme.MUTED);
-        tipLabel.setFont(new Font("SansSerif", Font.PLAIN, 15));
-
-        JPanel buttonPanel = new JPanel();
-        buttonPanel.setOpaque(false);
-
-        prevButton = new RoundedButton("Previous");
-        nextButton = new RoundedButton("Next");
-        submitButton = new RoundedButton("Submit Quiz");
-
-        prevButton.setPreferredSize(new Dimension(150, 45));
-        nextButton.setPreferredSize(new Dimension(150, 45));
-        submitButton.setPreferredSize(new Dimension(180, 45));
-
-        prevButton.addActionListener(e -> {
-            saveCurrentAnswer();
-            if (currentIndex > 0) {
-                currentIndex--;
-                loadQuestion();
-            }
-        });
-
-        nextButton.addActionListener(e -> {
-            saveCurrentAnswer();
-            if (currentIndex < questions.size() - 1) {
-                currentIndex++;
-                loadQuestion();
-            }
-        });
-
-        submitButton.addActionListener(e -> submitQuiz());
-
-        buttonPanel.add(prevButton);
-        buttonPanel.add(Box.createHorizontalStrut(10));
-        buttonPanel.add(nextButton);
-        buttonPanel.add(Box.createHorizontalStrut(10));
-        buttonPanel.add(submitButton);
-
-        bottomPanel.add(tipLabel, BorderLayout.WEST);
-        bottomPanel.add(buttonPanel, BorderLayout.EAST);
-
-        return bottomPanel;
-    }
-
-    private JRadioButton createStyledOption() {
-        JRadioButton rb = new JRadioButton();
-        rb.setOpaque(false);
-        rb.setForeground(Theme.TEXT);
-        rb.setFont(new Font("SansSerif", Font.PLAIN, 18));
-        rb.setFocusPainted(false);
-        return rb;
-    }
-
-    private JPanel wrapOption(JRadioButton radioButton) {
-        JPanel panel = new JPanel(new BorderLayout());
-        panel.setOpaque(false);
-        panel.setBorder(BorderFactory.createCompoundBorder(
-                BorderFactory.createLineBorder(new Color(255, 255, 255, 30), 1),
-                new EmptyBorder(12, 15, 12, 15)
-        ));
-        panel.add(radioButton, BorderLayout.CENTER);
-        return panel;
+    private JRadioButton createOption() {
+        JRadioButton btn = new JRadioButton();
+        btn.setForeground(Color.WHITE);
+        btn.setBackground(new Color(28, 28, 50));
+        btn.setFont(new Font("Segoe UI", Font.PLAIN, 14));
+        return btn;
     }
 
     private void loadQuestion() {
-        Question q = questions.get(currentIndex);
 
-        questionCountLabel.setText("Question " + (currentIndex + 1) + " / " + questions.size());
-        progressBar.setValue(currentIndex + 1);
-        progressBar.setString((currentIndex + 1) + " of " + questions.size());
+        if (questions == null || questions.isEmpty()) {
+            JOptionPane.showMessageDialog(this, "No questions found!");
+            dispose();
+            new CategorySelectionPage(student).setVisible(true);
+            return;
+        }
 
-        questionArea.setText(q.getQuestionText());
+        if (index >= questions.size()) {
+            showResult();
+            return;
+        }
 
-        optionA.setText("A. " + q.getOptionA());
-        optionB.setText("B. " + q.getOptionB());
-        optionC.setText("C. " + q.getOptionC());
-        optionD.setText("D. " + q.getOptionD());
+        Question q = questions.get(index);
+
+        questionLabel.setText("<html><b>" + (index + 1) + ". " + q.getQuestionText() + "</b></html>");
+
+        optA.setText("A. " + q.getOptionA());
+        optB.setText("B. " + q.getOptionB());
+        optC.setText("C. " + q.getOptionC());
+        optD.setText("D. " + q.getOptionD());
 
         group.clearSelection();
 
-        String savedAnswer = selectedAnswers.get(currentIndex);
-        if (savedAnswer.equals("A")) optionA.setSelected(true);
-        if (savedAnswer.equals("B")) optionB.setSelected(true);
-        if (savedAnswer.equals("C")) optionC.setSelected(true);
-        if (savedAnswer.equals("D")) optionD.setSelected(true);
+        progressLabel.setText("Question " + (index + 1) + "/" + questions.size());
+        progressBar.setValue((index + 1) * 100 / questions.size());
 
-        prevButton.setEnabled(currentIndex > 0);
-        nextButton.setEnabled(currentIndex < questions.size() - 1);
-    }
+        if (index == questions.size() - 1) {
+            nextBtn.setText("Submit");
+        } else {
+            nextBtn.setText("Next");
+        }
 
-    private void saveCurrentAnswer() {
-        if (optionA.isSelected()) selectedAnswers.set(currentIndex, "A");
-        else if (optionB.isSelected()) selectedAnswers.set(currentIndex, "B");
-        else if (optionC.isSelected()) selectedAnswers.set(currentIndex, "C");
-        else if (optionD.isSelected()) selectedAnswers.set(currentIndex, "D");
-        else selectedAnswers.set(currentIndex, "");
+        startTimer();
     }
 
     private void startTimer() {
-        quizTimer = new Timer(1000, e -> {
-            timeLeft--;
-            int minutes = timeLeft / 60;
-            int seconds = timeLeft % 60;
-            timerLabel.setText(String.format("Time Left: %02d:%02d", minutes, seconds));
 
-            if (timeLeft <= 60) {
-                timerLabel.setForeground(new Color(255, 120, 120));
-            }
+        timeLeft = 15;
+        timerLabel.setText("Time: 15");
+
+        if (timer != null) timer.stop();
+
+        timer = new Timer(1000, e -> {
+            timeLeft--;
+            timerLabel.setText("Time: " + timeLeft);
 
             if (timeLeft <= 0) {
-                quizTimer.stop();
-                JOptionPane.showMessageDialog(this, "Time is up! Quiz will be submitted now.");
-                submitQuizDirectly();
+                timer.stop();
+                nextQuestion();
             }
         });
-        quizTimer.start();
+
+        timer.start();
     }
 
-    private void submitQuiz() {
-        saveCurrentAnswer();
+    private void nextQuestion() {
 
-        int confirm = JOptionPane.showConfirmDialog(
-                this,
-                "Are you sure you want to submit the quiz?",
-                "Confirm Submission",
-                JOptionPane.YES_NO_OPTION
-        );
+        if (timer != null) timer.stop();
 
-        if (confirm == JOptionPane.YES_OPTION) {
-            submitQuizDirectly();
+        String selected = "";
+
+        if (optA.isSelected()) selected = "A";
+        else if (optB.isSelected()) selected = "B";
+        else if (optC.isSelected()) selected = "C";
+        else if (optD.isSelected()) selected = "D";
+
+        if (selected.equals(questions.get(index).getCorrectAnswer())) {
+            score++;
         }
+
+        index++;
+        loadQuestion();
     }
 
-    private void submitQuizDirectly() {
-        if (quizTimer != null) {
-            quizTimer.stop();
-        }
+    private void showResult() {
 
-        int score = 0;
+        this.dispose();
 
-        for (int i = 0; i < questions.size(); i++) {
-            if (selectedAnswers.get(i).equalsIgnoreCase(questions.get(i).getCorrectAnswer())) {
-                score++;
-            }
-        }
-
-        ResultDAO resultDAO = new ResultDAO();
-        resultDAO.saveResult(student.getId(), score, questions.size());
-
-        dispose();
-        new ResultPage(student, score, questions.size()).setVisible(true);
+        new ResultPage(
+                student,
+                score,
+                questions.size(),
+                category
+        ).setVisible(true);
     }
 }

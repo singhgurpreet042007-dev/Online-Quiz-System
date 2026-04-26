@@ -11,15 +11,18 @@ import java.util.List;
 
 public class QuestionDAO {
 
-    public List<Question> getAllQuestions() {
+    public List<Question> getQuestionsByCategory(String category) {
         List<Question> questions = new ArrayList<>();
 
         try {
             Connection con = DBConnection.getConnection();
-            if (con == null) return questions;
 
-            String query = "SELECT * FROM questions ORDER BY question_id ASC";
+            String query = "SELECT * FROM questions WHERE LOWER(category) = LOWER(?) ORDER BY RAND() LIMIT 5";
             PreparedStatement ps = con.prepareStatement(query);
+            ps.setString(1, category);
+
+            System.out.println("Category Selected: " + category);
+
             ResultSet rs = ps.executeQuery();
 
             while (rs.next()) {
@@ -35,8 +38,10 @@ public class QuestionDAO {
                 questions.add(q);
             }
 
+            System.out.println("Total Questions Fetched: " + questions.size());
+
         } catch (Exception e) {
-            System.out.println("Question Fetch Error: " + e.getMessage());
+            System.out.println("Error: " + e.getMessage());
         }
 
         return questions;

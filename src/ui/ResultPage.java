@@ -1,5 +1,6 @@
 package ui;
 
+import dao.ResultDAO;
 import model.Student;
 
 import javax.swing.*;
@@ -8,7 +9,12 @@ import java.awt.*;
 
 public class ResultPage extends JFrame {
 
-    public ResultPage(Student student, int score, int total) {
+    public ResultPage(Student student, int score, int total, String category) {
+
+        // 🔥 SAVE RESULT IN DB
+        ResultDAO dao = new ResultDAO();
+        dao.saveResult(student.getId(), category, score, total);
+
         setTitle("Quiz Result");
         setSize(1000, 650);
         setLocationRelativeTo(null);
@@ -74,7 +80,7 @@ public class ResultPage extends JFrame {
 
         historyBtn.addActionListener(e -> {
             dispose();
-            new HistoryPage(student).setVisible(true);
+            new PreviousAttemptsPage(student.getId()).setVisible(true);
         });
 
         exitBtn.addActionListener(e -> System.exit(0));
