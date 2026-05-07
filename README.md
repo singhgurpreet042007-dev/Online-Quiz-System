@@ -12,6 +12,7 @@ A Java-based Quiz Application that allows users to attempt quizzes, calculate sc
 * 📊 Result Display Page
 * 🏆 Leaderboard System
 * 🗄️ MySQL Database Integration
+* Multiple Quiz Option In Diff Subjects
 
 ---
 
